@@ -91,7 +91,7 @@ void aSsErT(bool b, const char *s, int i)
 typedef BloombergLP::bsls::Types::Int64  Int64;
 typedef BloombergLP::bsls::Types::Uint64 Uint64;
 
-typedef BloombergLP::bsls::ByteOrderUtil_Impl Impl;
+typedef BloombergLP::bsls::ByteOrderUtil_Impl<0> Concrete;
 
 //=============================================================================
 //                    GLOBAL HELPER FUNCTIONS FOR TESTING
@@ -111,46 +111,10 @@ void swapBytesInPlace(TYPE *value)
     }
 }
 
-inline
-unsigned short
-mySwapBytes16(unsigned short x)
-    // Return the value of the specified 'x' with the byte order reversed.
+template <class T>
+T mySwapBytes(T x)
 {
-#if defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_16)
-    return Impl::customSwap16(x);
-#elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P16)
-    return Impl::customSwapP16(&x);
-#else
-    return Impl::genericSwap16(x);
-#endif
-}
-
-inline
-unsigned int
-mySwapBytes32(unsigned int x)
-    // Return the value of the specified 'x' with the byte order reversed.
-{
-#if defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_32)
-    return Impl::customSwap32(x);
-#elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P32)
-    return Impl::customSwapP32(&x);
-#else
-    return Impl::genericSwap32(x);
-#endif
-}
-
-inline
-bsls::Types::Uint64
-mySwapBytes64(bsls::Types::Uint64 x)
-    // Return the value of the specified 'x' with the byte order reversed.
-{
-#if defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_64)
-    return Impl::customSwap64(x);
-#elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P64)
-    return Impl::customSwapP64(&x);
-#else
-    return Impl::genericSwap64(x);
-#endif
+    return bsls::ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
 }
 
 //=============================================================================
@@ -389,34 +353,59 @@ int main(int argc, char *argv[])
         //   'mySwapBytes[16,32,64}'
         // --------------------------------------------------------------------
 
-        if (verbose) printf("\nTESTING 'mySwapBytes*'\n"
-                              "======================\n");
+        if (verbose) printf("\nTESTING 'mySwapBytes'\n"
+                              "=====================\n");
 
         bool wchar_t_tested = false;
         bool long_tested    = false;
 
         if (verbose) printf("Testing 16 Bit\n");
         {
-            for (int ti = 0; ti < k_NUM_DATA16; ++ti) {
-                const int            line     = data16[ti].d_lineNum;
-                const unsigned short uValue   = data16[ti].d_value;
-                const unsigned short uSwapped = data16[ti].d_swapped;
-                const short          iValue   = data16[ti].d_value;
-                const short          iSwapped = data16[ti].d_swapped;
+            for (int ti = 0; ti < (1 << 16) + k_NUM_DATA16; ++ti) {
+                unsigned short uValue   = (unsigned short) ti;
+                unsigned short uSwapped = (unsigned short) ti;
+
+                swapBytesInPlace(&uSwapped);
+
+                short iValue   = (short) ti;
+                short iSwapped = (short) ti;
+
+                swapBytesInPlace(&iSwapped);
+
+                if (ti >= (1 << 16)) {
+                    uValue   = data16[ti - (1 << 16)].d_value;
+                    uSwapped = data16[ti - (1 << 16)].d_swapped;
+                    iValue   = data16[ti - (1 << 16)].d_value;
+                    iSwapped = data16[ti - (1 << 16)].d_swapped;
+                }
 
                 if (veryVerbose) { PHEX_(uValue); PHEX(uSwapped); }
 
-                LOOP_ASSERT(line, uSwapped == mySwapBytes16(uValue));
-                LOOP_ASSERT(line, uSwapped == Impl::genericSwap16(uValue));
-                LOOP_ASSERT(line, static_cast<unsigned short>(iSwapped) ==
-                                                        mySwapBytes16(iValue));
+                LOOP3_ASSERT(ti, uSwapped, mySwapBytes(uValue),
+                                              uSwapped == mySwapBytes(uValue));
+                LOOP3_ASSERT(ti, uSwapped, Concrete::genericSwap16(uValue),
+                                  uSwapped == Concrete::genericSwap16(uValue));
+
+                LOOP_ASSERT(ti, uValue   == mySwapBytes(uSwapped));
+                LOOP_ASSERT(ti, uValue   == Concrete::genericSwap16(uSwapped));
+
+                LOOP_ASSERT(ti, iSwapped == mySwapBytes(iValue));
+                LOOP_ASSERT(ti, iValue   == mySwapBytes(iSwapped));
+
+                LOOP3_ASSERT(ti, iSwapped,
+                                       (short) Concrete::genericSwap16(iValue),
+                          iSwapped == (short) Concrete::genericSwap16(iValue));
+                LOOP_ASSERT(ti,
+                          iValue == (short) Concrete::genericSwap16(iSwapped));
+
 #if 2 == BYTEORDERUTIL_SIZEOF_WCHAR_T
                 ASSERT(2 == sizeof(wchar_t));
 
                 const wchar_t wValue   = (wchar_t) uValue;
                 const wchar_t wSwapped = (wchar_t) uSwapped;
 
-                LOOP_ASSERT(line, wSwapped == mySwapBytes16(wValue));
+                LOOP_ASSERT(ti, wSwapped == mySwapBytes(wValue));
+                LOOP_ASSERT(ti, wValue   == mySwapBytes(wSwapped));
 
                 wchar_t_tested = true;
 #endif
@@ -426,17 +415,23 @@ int main(int argc, char *argv[])
         if (verbose) printf("Testing 32 Bit\n");
         {
             for (int ti = 0; ti < k_NUM_DATA32; ++ti) {
-                const int          line     = data32[ti].d_lineNum;
-                const unsigned int uValue   = data32[ti].d_value;
-                const unsigned int uSwapped = data32[ti].d_swapped;
-                const int          iValue   = data32[ti].d_value;
-                const int          iSwapped = data32[ti].d_swapped;
+                const int    line     = data32[ti].d_lineNum;
+                unsigned int uValue   = data32[ti].d_value;
+                unsigned int uSwapped = data32[ti].d_swapped;
+                int          iValue   = data32[ti].d_value;
+                int          iSwapped = data32[ti].d_swapped;
 
                 if (veryVerbose) { PHEX_(uValue); PHEX(uSwapped); }
 
-                LOOP_ASSERT(line, uSwapped == mySwapBytes32(uValue));
-                LOOP_ASSERT(line, uSwapped == Impl::genericSwap32(uValue));
-                LOOP_ASSERT(line, iSwapped == (int) mySwapBytes32(iValue));
+                LOOP_ASSERT(line, uSwapped == mySwapBytes(uValue));
+                LOOP_ASSERT(line, uValue   == mySwapBytes(uSwapped));
+
+                LOOP_ASSERT(line, uSwapped == Concrete::genericSwap32(uValue));
+                LOOP_ASSERT(line, uValue   ==
+                                            Concrete::genericSwap32(uSwapped));
+
+                LOOP_ASSERT(line, iSwapped == mySwapBytes(iValue));
+                LOOP_ASSERT(line, iValue   == mySwapBytes(iSwapped));
 
 #if 4 == BYTEORDERUTIL_SIZEOF_WCHAR_T
                 ASSERT(4 == sizeof(wchar_t));
@@ -444,8 +439,8 @@ int main(int argc, char *argv[])
                 const wchar_t wValue   = (wchar_t) uValue;
                 const wchar_t wSwapped = (wchar_t) uSwapped;
 
-                LOOP_ASSERT(line, wSwapped ==
-                                          (wchar_t) mySwapBytes32(wValue));
+                LOOP_ASSERT(line, wSwapped == mySwapBytes(wValue));
+                LOOP_ASSERT(line, wValue   == mySwapBytes(wSwapped));
 
                 wchar_t_tested = true;
 #endif
@@ -459,13 +454,17 @@ int main(int argc, char *argv[])
                 const unsigned long uLValue   = (unsigned long) uValue;
                 const unsigned long uLSwapped = (unsigned long) uSwapped;
 
-                LOOP_ASSERT(line, iLSwapped == (long) mySwapBytes32(iLValue));
-                LOOP_ASSERT(line, iLValue  == (long) mySwapBytes32(iLSwapped));
+                LOOP_ASSERT(line, iLSwapped == mySwapBytes(iLValue));
+                LOOP_ASSERT(line, iLValue   == mySwapBytes(iLSwapped));
 
-                LOOP_ASSERT(line, uLSwapped == (unsigned long)
-                                                       mySwapBytes32(uLValue));
-                LOOP_ASSERT(line, uLValue   == (unsigned long)
-                                                     mySwapBytes32(uLSwapped));
+                LOOP_ASSERT(line, iLValue   == mySwapBytes(iLSwapped));
+                LOOP_ASSERT(line, iLSwapped == mySwapBytes(iLValue));
+
+                LOOP_ASSERT(line, uLSwapped == mySwapBytes(uLValue));
+                LOOP_ASSERT(line, uLValue   == mySwapBytes(uLSwapped));
+
+                LOOP_ASSERT(line, uLValue   == mySwapBytes(uLSwapped));
+                LOOP_ASSERT(line, uLSwapped == mySwapBytes(uLValue));
 
                 long_tested = true;
 #endif
@@ -485,10 +484,15 @@ int main(int argc, char *argv[])
 
                 if (veryVerbose) { PHEX_(uValue); PHEX(uSwapped); }
 
-                LOOP_ASSERT(line, uSwapped == mySwapBytes64(uValue));
-                LOOP_ASSERT(line, uSwapped == Impl::genericSwap64(uValue));
-                LOOP_ASSERT(line, iSwapped ==
-                                            (Int64) mySwapBytes64(iValue));
+                LOOP_ASSERT(line, uSwapped == mySwapBytes(uValue));
+                LOOP_ASSERT(line, uValue   == mySwapBytes(uSwapped));
+
+                LOOP_ASSERT(line, uSwapped == Concrete::genericSwap64(uValue));
+                LOOP_ASSERT(line, uValue   ==
+                                            Concrete::genericSwap64(uSwapped));
+
+                LOOP_ASSERT(line, iSwapped == mySwapBytes(iValue));
+                LOOP_ASSERT(line, iValue   == mySwapBytes(iSwapped));
 
 #if 8 == BYTEORDERUTIL_SIZEOF_LONG
                 ASSERT(8 == sizeof(long));
@@ -499,13 +503,17 @@ int main(int argc, char *argv[])
                 const unsigned long uLValue   = (unsigned long) uValue;
                 const unsigned long uLSwapped = (unsigned long) uSwapped;
 
-                LOOP_ASSERT(line, iLSwapped == (long) mySwapBytes64(iLValue));
-                LOOP_ASSERT(line, iLValue  == (long) mySwapBytes64(iLSwapped));
+                LOOP_ASSERT(line, iLSwapped == mySwapBytes(iLValue));
+                LOOP_ASSERT(line, iLValue   == mySwapBytes(iLSwapped));
 
-                LOOP_ASSERT(line, uLSwapped == (unsigned long)
-                                                       mySwapBytes64(uLValue));
-                LOOP_ASSERT(line, uLValue   == (unsigned long)
-                                                     mySwapBytes64(uLSwapped));
+                LOOP_ASSERT(line, iLValue   == mySwapBytes(iLSwapped));
+                LOOP_ASSERT(line, iLSwapped == mySwapBytes(iLValue));
+
+                LOOP_ASSERT(line, uLValue   == mySwapBytes(uLSwapped));
+                LOOP_ASSERT(line, uLSwapped == mySwapBytes(uLValue));
+
+                LOOP_ASSERT(line, uLValue   == mySwapBytes(uLSwapped));
+                LOOP_ASSERT(line, uLSwapped == mySwapBytes(uLValue));
 
                 long_tested = true;
 #endif
@@ -532,11 +540,11 @@ int main(int argc, char *argv[])
         //:   order of the object.
         //:
         //: 2 For each table:
-        //:   A Assert that the table length is >10.
-        //:   B Traverse the table, apply 'swapBytesInPlace' to verify the
+        //:   o Assert that the table length is >10.
+        //:   o Traverse the table, apply 'swapBytesInPlace' to verify the
         //:     expected swapped value matches the swapped value.
-        //:   6 Call 'Impl::genericSwapNN' on signed and unsigned values and
-        //:     confirm the result matches the expected value.
+        //:   o Call 'Concrete::genericSwapNN' on signed and unsigned values
+        //:     and confirm the result matches the expected value.
         //
         // Testing:
         //   'genericSwap{16,32,64}'
@@ -563,9 +571,9 @@ int main(int argc, char *argv[])
                 swapBytesInPlace(&uVerify);
                 ASSERT(uSwapped == uVerify);
 
-                LOOP_ASSERT(line, uSwapped == Impl::genericSwap16(uValue));
+                LOOP_ASSERT(line, uSwapped == Concrete::genericSwap16(uValue));
                 LOOP_ASSERT(line, static_cast<unsigned short>(iSwapped) ==
-                                              Impl::genericSwap16(iValue));
+                                              Concrete::genericSwap16(iValue));
             }
         }
 
@@ -586,9 +594,9 @@ int main(int argc, char *argv[])
                 swapBytesInPlace(&uVerify);
                 ASSERT(uSwapped == uVerify);
 
-                LOOP_ASSERT(line, uSwapped == Impl::genericSwap32(uValue));
+                LOOP_ASSERT(line, uSwapped == Concrete::genericSwap32(uValue));
                 LOOP_ASSERT(line, iSwapped ==
-                                          (int) Impl::genericSwap32(iValue));
+                                        (int) Concrete::genericSwap32(iValue));
             }
         }
 
@@ -609,9 +617,9 @@ int main(int argc, char *argv[])
                 swapBytesInPlace(&uVerify);
                 ASSERT(uSwapped == uVerify);
 
-                LOOP_ASSERT(line, uSwapped == Impl::genericSwap64(uValue));
+                LOOP_ASSERT(line, uSwapped == Concrete::genericSwap64(uValue));
                 LOOP_ASSERT(line, iSwapped ==
-                                        (Int64) Impl::genericSwap64(iValue));
+                                      (Int64) Concrete::genericSwap64(iValue));
             }
         }
       } break;

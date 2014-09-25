@@ -1,10 +1,10 @@
 // bsls_byteorderutil_impl.cpp                                        -*-C++-*-
 #include <bsls_byteorderutil_impl.h>
 
-#include <bsls_bsltestutil.h>    // for testing only
-
 #include <bsls_ident.h>
 BSLS_IDENT("$Id$ $CSID$")
+
+#include <bsls_bsltestutil.h>    // for testing only
 
 // ============================================================================
 // IMPLEMENTATION NOTES

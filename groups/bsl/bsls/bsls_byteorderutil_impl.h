@@ -13,12 +13,7 @@ BSLS_IDENT("$Id: $")
 //   bsls::ByteOrderUtil_Impl: namespace for swapping functions
 //
 //@MACROS:
-//   BSLS_BYTEORDERUTIL_IMPL_CUSTOM_16:  'customeSwap16'  function is defined
-//   BSLS_BYTEORDERUTIL_IMPL_CUSTOM_32:  'customeSwap32'  function is defined
-//   BSLS_BYTEORDERUTIL_IMPL_CUSTOM_64:  'customeSwap64'  function is defined
-//   BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P16: 'customeSwapP16' function is defined
-//   BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P32: 'customeSwapP32' function is defined
-//   BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P64: 'customeSwapP64' function is defined
+//   BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT
 //
 //@SEE ALSO: bsls_byteorderutil, bsls_byteorder
 //
@@ -79,62 +74,156 @@ namespace BloombergLP {
 
 namespace bsls {
 
-                          // =========================
-                          // struct ByteOrderUtil_Impl
-                          // =========================
+                            // =========================
+                            // struct ByteOrderUtil_Impl
+                            // =========================
 
+template <Types::size_type WIDTH>
 struct ByteOrderUtil_Impl {
-    // This 'struct' is a namespace for the byte order swapping functions to
-    // support 'bsls_byteorderutil' and 'bsls_byteorder'.
+    // This templatized utility struct provides a set of namespaces for type-
+    // and size-specific swap dispatch functions that call the size-appropriate
+    // 'ByteOrderUtil_Impl_Concrete' function for any type.
+
+    // It was necessary to declare this class rather than having
+    // 'swapBytes<class T, size_type WIDTH>' be declared in
+    // 'ByteOrderUtil_Impl_Concrete' because function templates don't allow
+    // partial specialization.
 
     // CLASS METHODS
 
-    // custom, platform-specific inline implementations, not defined on all
-    // platforms
+                   // implemented only in <0> specialization
+
+    // custom, platform-specific inline, concrete, non-template
+    // implementations, not defined on all platforms
 
     static
-    unsigned short customSwap16(       unsigned short   x);
+    unsigned short customSwap16(       unsigned short  x);
         // Return the specified 'x' with byte order swapped.
 
     static
-    unsigned int   customSwap32(       unsigned int     x);
+    unsigned int   customSwap32(       unsigned int    x);
         // Return the specified 'x' with byte order swapped.
 
     static
-    Types::Uint64  customSwap64(       Types::Uint64    x);
+    Types::Uint64  customSwap64(       Types::Uint64   x);
         // Return the specified 'x' with byte order swapped.
 
     static
-    unsigned short customSwapP16( const unsigned short *x);
+    unsigned short customSwapP16(const unsigned short *x);
         // Return the specified '*x' with byte order swapped.
 
     static
-    unsigned int   customSwapP32( const unsigned int   *x);
+    unsigned int   customSwapP32(const unsigned int   *x);
         // Return the specified '*x' with byte order swapped.
 
     static
-    Types::Uint64  customSwapP64( const Types::Uint64  *x);
+    Types::Uint64  customSwapP64(const Types::Uint64  *x);
         // Return the specified '*x' with byte order swapped.
 
-    // generic, non-platform-specific implementations, always defined on all
-    // platforms
-
-    static
-    unsigned short genericSwap16(      unsigned short   x);
-        // Return the specified '*x' with byte order swapped.
+    // generic, non-platform-specific inline, concrete, non-template
+    // implementations, not defined on all platforms
 
     static
-    unsigned int   genericSwap32(      unsigned int     x);
-        // Return the specified '*x' with byte order swapped.
+    unsigned short genericSwap16(      unsigned short  x);
+        // Return the specified 'x' with byte order swapped.
 
     static
-    Types::Uint64  genericSwap64(      Types::Uint64    x);
-        // Return the specified '*x' with byte order swapped.
+    unsigned int   genericSwap32(      unsigned int    x);
+        // Return the specified 'x' with byte order swapped.
+
+    static
+    Types::Uint64  genericSwap64(      Types::Uint64   x);
+        // Return the specified 'x' with byte order swapped.
+
+               // implemented only in <non-zero> specializations
+
+    // CLASS METHODS
+    template <class TYPE>
+    static TYPE swapBytes(TYPE x);
+        // Return the specified 'x' with byte order swapped.
 };
 
-                         // -------------------------
-                         // struct ByteOrderUtil_Impl
-                         // -------------------------
+template <>
+struct ByteOrderUtil_Impl<0> {
+    // This specialization provides the 'concrete', non-template functions upon
+    // which the template 'swapBytes' functions in the other specializations
+    // are based.
+
+    // CLASS METHODS
+    static
+    unsigned short customSwap16(       unsigned short  x);
+    static
+    unsigned int   customSwap32(       unsigned int    x);
+    static
+    Types::Uint64  customSwap64(       Types::Uint64   x);
+    static
+    unsigned short customSwapP16(const unsigned short *x);
+    static
+    unsigned int   customSwapP32(const unsigned int   *x);
+    static
+    Types::Uint64  customSwapP64(const Types::Uint64  *x);
+    static
+    unsigned short genericSwap16(      unsigned short  x);
+    static
+    unsigned int   genericSwap32(      unsigned int    x);
+    static
+    Types::Uint64  genericSwap64(      Types::Uint64   x);
+};
+
+template <>
+struct ByteOrderUtil_Impl<1> {
+    // CLASS METHODS
+    template <class TYPE>
+    static TYPE swapBytes(TYPE x);
+};
+
+template <>
+struct ByteOrderUtil_Impl<2> {
+    // CLASS METHODS
+    template <class TYPE>
+    static TYPE swapBytes(TYPE x);
+};
+
+template <>
+struct ByteOrderUtil_Impl<4> {
+    // CLASS METHODS
+    template <class TYPE>
+    static TYPE swapBytes(TYPE x);
+};
+
+template <>
+struct ByteOrderUtil_Impl<8> {
+    // CLASS METHODS
+    template <class TYPE>
+    static TYPE swapBytes(TYPE x);
+};
+
+// ============================================================================
+//                                   MACROS
+// ============================================================================
+
+                // -------------------------------------------------
+                // macro BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT
+                // -------------------------------------------------
+
+// We don't have access to 'BSLMF_ASSERT' here in 'bsls' -- do a crude
+// compile-time assert for use in 'bsls_byteorderutil'.  This macro will
+// deliberately cause a compilation error if 'expr' evaluates to 'false'.
+// 'expr' must be a compile-time expression.  Note that this macro can only be
+// called in a code body.  Also note that this macro is not to be used outside
+// this file.
+
+#define BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(expr)                     \
+        { enum { k_NOT_INFINITY = 1 / static_cast<int>(expr) };               \
+        (void) k_NOT_INFINITY; }
+
+// ============================================================================
+//                               INLINE DEFINITIONS
+// ============================================================================
+
+                   // ----------------------------------------
+                   // struct ByteOrderUtil_Impl<0> -- Concrete
+                   // ----------------------------------------
 
 #if defined(BSLS_PLATFORM_CMP_GNU) && BSLS_PLATFORM_CMP_VER_MAJOR >= 40300
 
@@ -151,7 +240,7 @@ struct ByteOrderUtil_Impl {
 
 inline
 unsigned int
-ByteOrderUtil_Impl::customSwap32(unsigned int x)
+ByteOrderUtil_Impl<0>::customSwap32(unsigned int x)
 {
     // generic GNU impl
 
@@ -160,7 +249,7 @@ ByteOrderUtil_Impl::customSwap32(unsigned int x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
+ByteOrderUtil_Impl<0>::customSwap64(Types::Uint64 x)
 {
     // generic GNU impl
 
@@ -178,7 +267,7 @@ ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
 
 inline
 unsigned short
-ByteOrderUtil_Impl::customSwap16(unsigned short x)
+ByteOrderUtil_Impl<0>::customSwap16(unsigned short x)
 {
     // msvc impl
 
@@ -187,7 +276,7 @@ ByteOrderUtil_Impl::customSwap16(unsigned short x)
 
 inline
 unsigned int
-ByteOrderUtil_Impl::customSwap32(unsigned int x)
+ByteOrderUtil_Impl<0>::customSwap32(unsigned int x)
 {
     // msvc impl
 
@@ -199,7 +288,7 @@ ByteOrderUtil_Impl::customSwap32(unsigned int x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
+ByteOrderUtil_Impl<0>::customSwap64(Types::Uint64 x)
 {
     // msvc impl
 
@@ -217,7 +306,7 @@ ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
 
 inline
 unsigned short
-ByteOrderUtil_Impl::customSwap16(unsigned short x)
+ByteOrderUtil_Impl<0>::customSwap16(unsigned short x)
 {
     // hpux impl
 
@@ -228,7 +317,7 @@ ByteOrderUtil_Impl::customSwap16(unsigned short x)
 
 inline
 unsigned int
-ByteOrderUtil_Impl::customSwap32(unsigned int x)
+ByteOrderUtil_Impl<0>::customSwap32(unsigned int x)
 {
     // hpux impl
 
@@ -239,7 +328,7 @@ ByteOrderUtil_Impl::customSwap32(unsigned int x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
+ByteOrderUtil_Impl<0>::customSwap64(Types::Uint64 x)
 {
     // hpux impl
 
@@ -256,6 +345,7 @@ ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
 #define BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P32 1
 #define BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P64 1
 
+inline
 unsigned short
 bsls_byteOrderUtil_Impl_powerpc_swap_p16(const unsigned short *x);
     // Return the specified '*x' with byte order swapped.
@@ -269,6 +359,7 @@ bsls_byteOrderUtil_Impl_powerpc_swap_p16(const unsigned short *x);
 #pragma mc_func bsls_byteOrderUtil_Impl_powerpc_swap_p16 { "7c601e2c" }
 #pragma reg_killed_by bsls_byteOrderUtil_Impl_powerpc_swap_p16 gr3
 
+inline
 unsigned int bsls_byteOrderUtil_Impl_powerpc_swap_p32(const unsigned int *x);
     // Return the specified '*x' with byte order swapped.
 
@@ -283,6 +374,7 @@ unsigned int bsls_byteOrderUtil_Impl_powerpc_swap_p32(const unsigned int *x);
 #pragma mc_func bsls_byteOrderUtil_Impl_powerpc_swap_p32 { "7c601c2c" }
 #pragma reg_killed_by bsls_byteOrderUtil_Impl_powerpc_swap_p32 gr3
 
+inline
 unsigned long long bsls_byteOrderUtil_Impl_powerpc_swap_p64(
                                                   const unsigned long long *x);
     // Return the specified '*x' with byte order swapped.
@@ -313,7 +405,8 @@ unsigned long long bsls_byteOrderUtil_Impl_powerpc_swap_p64(
 #endif  // BSLS_PLATFORM_CPU_32_BIT else
 
 inline
-unsigned short ByteOrderUtil_Impl::customSwapP16(const unsigned short *x)
+unsigned short ByteOrderUtil_Impl<0>::customSwapP16(
+                                                       const unsigned short *x)
 {
     // powerpc impl
 
@@ -321,7 +414,7 @@ unsigned short ByteOrderUtil_Impl::customSwapP16(const unsigned short *x)
 }
 
 inline
-unsigned int ByteOrderUtil_Impl::customSwapP32(const unsigned int *x)
+unsigned int ByteOrderUtil_Impl<0>::customSwapP32(const unsigned int *x)
 {
     // powerpc impl
 
@@ -329,7 +422,8 @@ unsigned int ByteOrderUtil_Impl::customSwapP32(const unsigned int *x)
 }
 
 inline
-Types::Uint64 ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
+Types::Uint64 ByteOrderUtil_Impl<0>::customSwapP64(
+                                                        const Types::Uint64 *x)
 {
     // powerpc impl
 
@@ -351,7 +445,7 @@ Types::Uint64 ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
 
 inline
 unsigned short
-ByteOrderUtil_Impl::customSwapP16(const unsigned short *x)
+ByteOrderUtil_Impl<0>::customSwapP16(const unsigned short *x)
 {
     // sparc gnu impl
 
@@ -377,7 +471,7 @@ ByteOrderUtil_Impl::customSwapP16(const unsigned short *x)
 
 inline
 unsigned int
-ByteOrderUtil_Impl::customSwapP32(const unsigned int *x)
+ByteOrderUtil_Impl<0>::customSwapP32(const unsigned int *x)
 {
     // sparc gnu pre-4.03 impl
 
@@ -393,7 +487,7 @@ ByteOrderUtil_Impl::customSwapP32(const unsigned int *x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
+ByteOrderUtil_Impl<0>::customSwapP64(const Types::Uint64 *x)
 {
     // sparc gnu pre-4.03 impl
 
@@ -409,7 +503,7 @@ ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
+ByteOrderUtil_Impl<0>::customSwapP64(const Types::Uint64 *x)
 {
     // sparc gnu pre-4.03 impl
 
@@ -449,7 +543,8 @@ unsigned long long bsls_byteOrderUtil_Impl_sparc_CC_swap_p64(
 }
 
 inline
-Types::Uint64 ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
+Types::Uint64 ByteOrderUtil_Impl<0>::customSwapP64(
+                                                        const Types::Uint64 *x)
 {
     // sparc CC impl
 
@@ -470,7 +565,7 @@ Types::Uint64 ByteOrderUtil_Impl::customSwapP64(const Types::Uint64 *x)
 
 inline
 unsigned short
-ByteOrderUtil_Impl::customSwap16(unsigned short x)
+ByteOrderUtil_Impl<0>::customSwap16(unsigned short x)
 {
     // x86 gnu impl
 
@@ -489,7 +584,7 @@ ByteOrderUtil_Impl::customSwap16(unsigned short x)
 
 inline
 unsigned int
-ByteOrderUtil_Impl::customSwap32(unsigned int x)
+ByteOrderUtil_Impl<0>::customSwap32(unsigned int x)
 {
     // x86 gnu pre-4.03 impl
 
@@ -502,7 +597,7 @@ ByteOrderUtil_Impl::customSwap32(unsigned int x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
+ByteOrderUtil_Impl<0>::customSwap64(Types::Uint64 x)
 {
     // x86 gnu pre-4.03 impl
 
@@ -520,7 +615,7 @@ ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
+ByteOrderUtil_Impl<0>::customSwap64(Types::Uint64 x)
 {
     // x86 gnu pre-4.03 impl
 
@@ -535,14 +630,14 @@ ByteOrderUtil_Impl::customSwap64(Types::Uint64 x)
 
 inline
 unsigned short
-ByteOrderUtil_Impl::genericSwap16(unsigned short x)
+ByteOrderUtil_Impl<0>::genericSwap16(unsigned short x)
 {
     return static_cast<unsigned short>((x >> 8) | (x << 8));
 }
 
 inline
 unsigned int
-ByteOrderUtil_Impl::genericSwap32(unsigned int x)
+ByteOrderUtil_Impl<0>::genericSwap32(unsigned int x)
 {
     return ( x               << 24)
          | ((x & 0x0000ff00) <<  8)
@@ -552,7 +647,7 @@ ByteOrderUtil_Impl::genericSwap32(unsigned int x)
 
 inline
 Types::Uint64
-ByteOrderUtil_Impl::genericSwap64(Types::Uint64 x)
+ByteOrderUtil_Impl<0>::genericSwap64(Types::Uint64 x)
 {
     return ( x                         << 56)
          | ((x & 0x000000000000ff00LL) << 40)
@@ -563,6 +658,99 @@ ByteOrderUtil_Impl::genericSwap64(Types::Uint64 x)
          | ((x & 0x00ff000000000000LL) >> 40)
          | ( x                         >> 56);
 }
+
+                     // ------------------------------------
+                     // struct ByteOrderUtil_Impl<sizeof(x)>
+                     // ------------------------------------
+
+template <Types::size_type WIDTH>
+template <class TYPE>
+inline
+TYPE ByteOrderUtil_Impl<WIDTH>::swapBytes(TYPE)
+{
+    // Only 1, 2, 4, and 8 specializations are legal for this function.
+
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(false);
+}
+
+template <class TYPE>
+inline
+TYPE ByteOrderUtil_Impl<1>::swapBytes(TYPE x)
+{
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 1);
+
+    return x;
+}
+
+template <class TYPE>
+inline
+TYPE ByteOrderUtil_Impl<2>::swapBytes(TYPE x)
+{
+    typedef ByteOrderUtil_Impl<0> Concrete;
+
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 2);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
+                                                 sizeof(const unsigned short));
+
+#if   defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_16)
+    return static_cast<TYPE>(Concrete::customSwap16(x));
+#elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P16)
+    return static_cast<TYPE>(Concrete::customSwapP16(
+                                reinterpret_cast<const unsigned short *>(&x)));
+#else
+    return static_cast<TYPE>(Concrete::genericSwap16(x));
+#endif
+}
+
+template <class TYPE>
+inline
+TYPE ByteOrderUtil_Impl<4>::swapBytes(TYPE x)
+{
+    typedef ByteOrderUtil_Impl<0> Concrete;
+
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 4);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
+                                                   sizeof(const unsigned int));
+
+#if   defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_32)
+    return static_cast<TYPE>(Concrete::customSwap32(x));
+#elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P32)
+    return static_cast<TYPE>(Concrete::customSwapP32(
+                                  reinterpret_cast<const unsigned int *>(&x)));
+#else
+    return static_cast<TYPE>(Concrete::genericSwap32(x));
+#endif
+}
+
+template <class TYPE>
+inline
+TYPE ByteOrderUtil_Impl<8>::swapBytes(TYPE x)
+{
+    typedef ByteOrderUtil_Impl<0> Concrete;
+
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 8);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
+                                                  sizeof(const Types::Uint64));
+
+#if   defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_64)
+    return static_cast<TYPE>(Concrete::customSwap64(x));
+#elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P64)
+    return static_cast<TYPE>(Concrete::customSwapP64(
+                                 reinterpret_cast<const Types::Uint64 *>(&x)));
+#else
+    return static_cast<TYPE>(Concrete::genericSwap64(x));
+#endif
+}
+
+// The following macros, if defined, are only for internal use within this
+// file.
+
+#undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_16
+#undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_32
+#undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_64
+#undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P16
+#undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P32
+#undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P64
 
 }  // close package namespace
 }  // close enterprise namespace
