@@ -1005,6 +1005,7 @@ int main(int argc, char *argv[])
         //   Linux:          8.79e-09 s      6.25e-09 s      1.22e-08 s
         //   Aix:            1.09e-08 s      1.26e-08 s      1.32e-08 s
         //   Solaris:        2.97e-08 s      3.22e-08 s      9.77e-08 s
+        //   Windows:        6.17e-09 s      5.36e-09 s      7.57e-09 s
         // --------------------------------------------------------------------
 
         if (verbose) std::printf("\nPERFORMANCE SPEED TRIALS\n"
