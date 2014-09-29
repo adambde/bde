@@ -187,6 +187,37 @@ void swapBytesInPlace(TYPE *value)
     }
 }
 
+inline
+unsigned short
+myGenericSwap16(unsigned short x)
+{
+    return static_cast<unsigned short>((x >> 8) | (x << 8));
+}
+
+inline
+unsigned int
+myGenericSwap32(unsigned int x)
+{
+    return ( x               << 24)
+         | ((x & 0x0000ff00) <<  8)
+         | ((x & 0x00ff0000) >>  8)
+         | ( x               >> 24);
+}
+
+inline
+bsls::Types::Uint64
+myGenericSwap64(bsls::Types::Uint64 x)
+{
+    return ( x                         << 56)
+         | ((x & 0x000000000000ff00LL) << 40)
+         | ((x & 0x0000000000ff0000LL) << 24)
+         | ((x & 0x00000000ff000000LL) <<  8)
+         | ((x & 0x000000ff00000000LL) >>  8)
+         | ((x & 0x0000ff0000000000LL) >> 24)
+         | ((x & 0x00ff000000000000LL) >> 40)
+         | ( x                         >> 56);
+}
+
 }  // close unnamed namespace
 
 //=============================================================================
@@ -1054,42 +1085,43 @@ int main(int argc, char *argv[])
         total = 0;
         sw.reset();
         sw.start(true);
-        for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti) {
+        shortSrc = -1;
+        for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti, --shortSrc) {
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
 
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
 
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
 
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
             total += (bsls::Types::Uint64)
-                           bsls::ByteOrderUtil::swapBytes((unsigned short) ti);
+                                      bsls::ByteOrderUtil::swapBytes(shortSrc);
 
             if (0 == ti) {
                 break;
@@ -1104,6 +1136,46 @@ int main(int argc, char *argv[])
         double shortTime = sw.accumulatedUserTime() / (1 << 28) - dummy16Time;
 
         if (verbose) P(shortTime);
+
+        total = 0;
+        sw.reset();
+        sw.start(true);
+        shortSrc = -1;
+        for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti, --shortSrc) {
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+
+            if (0 == ti) {
+                break;
+            }
+        }
+        sw.stop();
+
+        LOOP_ASSERT(total, 0 == (total & 0xffff));
+
+        if (veryVerbose) P(total);
+
+        double genericShortTime =
+                            sw.accumulatedUserTime() / (1 << 28) - dummy16Time;
+
+        if (verbose) P(genericShortTime);
 
         total = 0;
         sw.reset();
@@ -1201,6 +1273,47 @@ int main(int argc, char *argv[])
         total = 0;
         sw.reset();
         sw.start(true);
+        intSrc = (1 << 24) - 1;
+        for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti, --intSrc) {
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+            total += (bsls::Types::Uint64) myGenericSwap32(intSrc);
+
+            if (0 == ti) {
+                break;
+            }
+        }
+        sw.stop();
+
+        LOOP2_ASSERT(total, (total & ((1 << 24) - 1)),
+                                               0 == (total & ((1 << 24) - 1)));
+
+        if (veryVerbose) P(total);
+
+        double genericIntTime =
+                            sw.accumulatedUserTime() / (1 << 28) - dummy32Time;
+
+        if (verbose) P(genericIntTime);
+
+        total = 0;
+        sw.reset();
+        sw.start(true);
         for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti) {
             total += ti;
             total += ti;
@@ -1269,6 +1382,43 @@ int main(int argc, char *argv[])
         double int64Time = sw.accumulatedUserTime() / (1 << 28) - dummy64Time;
 
         if (verbose) P(int64Time);
+
+        total = 0;
+        sw.reset();
+        sw.start(true);
+        for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti) {
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+            total += myGenericSwap64(ti);
+
+            if (0 == ti) {
+                break;
+            }
+        }
+        sw.stop();
+
+        LOOP_ASSERT(total, 0 == total);
+
+        double genericInt64Time =
+                            sw.accumulatedUserTime() / (1 << 28) - dummy64Time;
+
+        if (verbose) P(genericInt64Time);
       } break;
     }
 
