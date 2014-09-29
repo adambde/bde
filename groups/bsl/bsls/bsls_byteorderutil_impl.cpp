@@ -5,19 +5,25 @@
 BSLS_IDENT("$Id$ $CSID$")
 
 #include <bsls_bsltestutil.h>    // for testing only
+#include <bsls_stopwatch.h>      // for testing only
 
 // ============================================================================
 // IMPLEMENTATION NOTES
 //
 // Note that we declare all the possible 'customSwap*' functions in the
-// namespace 'struct', but only at most half of them (and possibly none of
-// them) will actually be defined.  All the ones that will be defined will be
-// defined inline in the .h file.  Never will a 'p' version (a function that
-// takes 'x' as a ptr) and a 'non-p' (a function that takes 'x' by value') be
-// defined for the same word width at the same time.  It was felt that to add
-// the myriad and byzantine #ifdef's needed to only declare the functions that
-// will later be defined in the .h file would unacceptably obscure the
-// readability of the declarations.
+// '*_Concrete' namespace 'struct', but only at most half of them (and possibly
+// none of them) will actually be defined.  All the ones that will be defined
+// will be defined inline in the .h file.  Never will a 'p' version (a function
+// that takes 'x' as a ptr) and a 'non-p' (a function that takes 'x' by value')
+// be defined for the same word width at the same time.  It was felt that to
+// add the myriad and byzantine #ifdef's needed to only declare the functions
+// that will later be defined in the .h file would unacceptably obscure the
+// readability of the deCLARATIONS.
+//
+// As for 'bsls_ByteOrderUtil_Impl', it was necessary to declare the template
+// 'struct' rather than having 'swapBytes<class T, size_type WIDTH>' be
+// declared in 'ByteOrderUtil_Impl_Concrete' because function templates don't
+// allow partial specialization.
 // ============================================================================
 
 namespace BloombergLP {

@@ -14,7 +14,7 @@
 //                                  --------
 // [3] TESTING CONSISTENCY OF COMPILE-TIME FLAGS
 // [2] TESTING 'mySwapBytes*'
-// [1] TESTING 'genericSwap*' & SOUNDNESS OF TABLE
+// [1] TESTING 'genericSwap*' & SOUNDNESS OF TABLES
 //-----------------------------------------------------------------------------
 // [3] 'BSLS_BYTEORDERUTIL_IMPL_CUSTOM_*'
 // [2] 'mySwapBytes[16,32,64}'
@@ -111,8 +111,8 @@ void swapBytesInPlace(TYPE *value)
     }
 }
 
-template <class T>
-T mySwapBytes(T x)
+template <class TYPE>
+TYPE mySwapBytes(TYPE x)
 {
     return bsls::ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
 }
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
         // TESTING 'mySwapBytes*'
         //
         // Concerns:
-        //: 1 That all incarnations of 'customSwapNN' or 'customSwapPNN' or
+        //: 1 That all incarnations of 'customSwapNN' or 'customSwapPNN' and
         //:   'genericSwapNN' work.
         //
         // Plan:
@@ -353,8 +353,8 @@ int main(int argc, char *argv[])
         //   'mySwapBytes[16,32,64}'
         // --------------------------------------------------------------------
 
-        if (verbose) printf("\nTESTING 'mySwapBytes'\n"
-                              "=====================\n");
+        if (verbose) printf("\nTESTING 'mySwapBytes*'\n"
+                              "======================\n");
 
         bool wchar_t_tested = false;
         bool long_tested    = false;
@@ -551,8 +551,8 @@ int main(int argc, char *argv[])
         // --------------------------------------------------------------------
 
         if (verbose) printf(
-                          "\nTESTING 'genericSwap*' & SOUNDNESS OF TABLE\n"
-                            "=============================================\n");
+                           "\nTESTING 'genericSwap*' & SOUNDNESS OF TABLES\n"
+                             "============================================\n");
 
         if (verbose) printf("Testing 16 Bit\n");
         {

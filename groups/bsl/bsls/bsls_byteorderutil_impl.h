@@ -10,7 +10,7 @@ BSLS_IDENT("$Id: $")
 //@PURPOSE: Provide implementation of byte-order manipulation functions.
 //
 //@CLASSES:
-//   bsls::ByteOrderUtil_Impl: namespace for template swapping functions
+//   bsls::ByteOrderUtil_Impl: namespace for swapping template functions
 //
 //@MACROS:
 //   BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT
@@ -71,7 +71,6 @@ BSLS_IDENT("$Id: $")
 #endif
 
 namespace BloombergLP {
-
 namespace bsls {
 
                       // ==================================
@@ -79,9 +78,9 @@ namespace bsls {
                       // ==================================
 
 struct ByteOrderUtil_Impl_Concrete {
-    // This 'struct' is a namespace for the non-template byte order swapping
-    // functions to support 'ByteOrderUtil_Impl' in this component.  It is not
-    // to be referred to by any other class, struct, or union.
+    // This 'struct' is a namespace for the non-template byte-order swapping
+    // functions that support 'ByteOrderUtil_Impl' in this component.  It is
+    // not to be referred to outside this this component.
 
     // CLASS METHODS
 
@@ -90,42 +89,51 @@ struct ByteOrderUtil_Impl_Concrete {
 
     static
     unsigned short customSwap16(       unsigned short  x);
-        // Return the specified 'x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     unsigned int   customSwap32(       unsigned int    x);
-        // Return the specified 'x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     Types::Uint64  customSwap64(       Types::Uint64   x);
-        // Return the specified 'x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     unsigned short customSwapP16(const unsigned short *x);
-        // Return the specified '*x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     unsigned int   customSwapP32(const unsigned int   *x);
-        // Return the specified '*x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     Types::Uint64  customSwapP64(const Types::Uint64  *x);
-        // Return the specified '*x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     // generic, non-platform-specific implementations, always defined on all
     // platforms
 
     static
     unsigned short genericSwap16(      unsigned short  x);
-        // Return the specified '*x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     unsigned int   genericSwap32(      unsigned int    x);
-        // Return the specified '*x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 
     static
     Types::Uint64  genericSwap64(      Types::Uint64   x);
-        // Return the specified '*x' with byte order swapped.
+        // Return the value that results from reversing the order of the bytes
+        // in the specified 'x'.
 };
 
                             // =========================
@@ -134,24 +142,16 @@ struct ByteOrderUtil_Impl_Concrete {
 
 template <Types::size_type WIDTH>
 struct ByteOrderUtil_Impl {
-    // This templatized utility struct provides a set of namespaces for type-
-    // and size-specific swap dispatch functions that call the size-appropriate
-    // 'ByteOrderUtil_Impl_Concrete' function for any type.
-
-    // It was necessary to declare this class rather than having
-    // 'swapBytes<class T, size_type WIDTH>' be declared in
-    // 'ByteOrderUtil_Impl_Concrete' because function templates don't allow
-    // partial specialization.
+    // This template utility 'struct' provides a set of namespaces for type-
+    // and size-specific 'swapBytes' dispatch functions that call the
+    // size-appropriate 'ByteOrderUtil_Impl_Concrete' function for any
+    // integral type.
 
     // CLASS METHODS
     template <class TYPE>
     static TYPE swapBytes(TYPE x);
         // Return the specified 'x' with byte order swapped.
 };
-
-// AIX xlC and Sun CC can't figure out the implementations of 'swapBytes' for
-// explicit values of 'WIDTH' without the following explicit specializations to
-// help it figure out the function signatures.
 
 template <>
 struct ByteOrderUtil_Impl<1> {
@@ -672,12 +672,13 @@ TYPE ByteOrderUtil_Impl<2>::swapBytes(TYPE x)
     typedef ByteOrderUtil_Impl_Concrete Concrete;
 
     BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 2);
-    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
-                                                 sizeof(const unsigned short));
 
 #if   defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_16)
     return static_cast<TYPE>(Concrete::customSwap16(x));
 #elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P16)
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
+                                                 sizeof(const unsigned short));
+
     return static_cast<TYPE>(Concrete::customSwapP16(
                                 reinterpret_cast<const unsigned short *>(&x)));
 #else
@@ -692,12 +693,13 @@ TYPE ByteOrderUtil_Impl<4>::swapBytes(TYPE x)
     typedef ByteOrderUtil_Impl_Concrete Concrete;
 
     BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 4);
-    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
-                                                   sizeof(const unsigned int));
 
 #if   defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_32)
     return static_cast<TYPE>(Concrete::customSwap32(x));
 #elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P32)
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
+                                                   sizeof(const unsigned int));
+
     return static_cast<TYPE>(Concrete::customSwapP32(
                                   reinterpret_cast<const unsigned int *>(&x)));
 #else
@@ -712,12 +714,13 @@ TYPE ByteOrderUtil_Impl<8>::swapBytes(TYPE x)
     typedef ByteOrderUtil_Impl_Concrete Concrete;
 
     BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) == 8);
-    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
-                                                  sizeof(const Types::Uint64));
 
 #if   defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_64)
     return static_cast<TYPE>(Concrete::customSwap64(x));
 #elif defined(BSLS_BYTEORDERUTIL_IMPL_CUSTOM_P64)
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(sizeof(x) ==
+                                                  sizeof(const Types::Uint64));
+
     return static_cast<TYPE>(Concrete::customSwapP64(
                                  reinterpret_cast<const Types::Uint64 *>(&x)));
 #else
@@ -725,7 +728,7 @@ TYPE ByteOrderUtil_Impl<8>::swapBytes(TYPE x)
 #endif
 }
 
-// These #defines were for internal use within this file only.
+// These identifiers were for internal use within this file only.
 
 #undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_16
 #undef BSLS_BYTEORDERUTIL_IMPL_CUSTOM_32

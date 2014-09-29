@@ -27,7 +27,7 @@ BSLS_IDENT("$Id: $")
 // In this example we demonstrate the use of different overloads of the
 // 'swapBytes' function.
 //
-// First we 'typedef' a shorthand to the namespace 'struct':
+// First, we 'typedef' a shorthand to the namespace 'struct':
 //..
 //  typedef bsls::ByteOrderUtil Util;
 //..
@@ -82,8 +82,8 @@ namespace bsls {
                             // ====================
 
 struct ByteOrderUtil {
-    // This utility struct provides a namespace for functions used for
-    // reversing the byte order of values having integral type.
+    // This namespace 'struct' provides a for functions used for reversing the
+    // byte order of values having integral type.
 
     // CLASS METHODS
     static bool           swapBytes(bool           x);
@@ -127,86 +127,94 @@ struct ByteOrderUtil {
 inline
 bool ByteOrderUtil::swapBytes(bool x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(1 == sizeof x);
+
+    return x;
 }
 
 inline
 char ByteOrderUtil::swapBytes(char x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(1 == sizeof x);
+
+    return x;
 }
 
 inline
 unsigned char ByteOrderUtil::swapBytes(unsigned char x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(1 == sizeof x);
+
+    return x;
 }
 
 inline
 signed char ByteOrderUtil::swapBytes(signed char x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(1 == sizeof x);
+
+    return x;
 }
 
 inline
 wchar_t ByteOrderUtil::swapBytes(wchar_t x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 short ByteOrderUtil::swapBytes(short x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 unsigned short ByteOrderUtil::swapBytes(unsigned short x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 int ByteOrderUtil::swapBytes(int x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 unsigned int ByteOrderUtil::swapBytes(unsigned int x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 long ByteOrderUtil::swapBytes(long x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 unsigned long ByteOrderUtil::swapBytes(unsigned long x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 bsls::Types::Uint64 ByteOrderUtil::swapBytes(bsls::Types::Uint64 x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 bsls::Types::Int64 ByteOrderUtil::swapBytes(bsls::Types::Int64 x)
 {
-    return ByteOrderUtil_Impl<sizeof(x)>::swapBytes(x);
+    return ByteOrderUtil_Impl<sizeof x>::swapBytes(x);
 }
 
 inline
 unsigned short
 ByteOrderUtil::swapBytes16(unsigned short x)
 {
-    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(2 == sizeof(x));
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(2 == sizeof x);
 
     return ByteOrderUtil_Impl<2>::swapBytes(x);
 }
@@ -215,7 +223,7 @@ inline
 unsigned int
 ByteOrderUtil::swapBytes32(unsigned int x)
 {
-    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(4 == sizeof(x));
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(4 == sizeof x);
 
     return ByteOrderUtil_Impl<4>::swapBytes(x);
 }
@@ -224,7 +232,7 @@ inline
 bsls::Types::Uint64
 ByteOrderUtil::swapBytes64(bsls::Types::Uint64 x)
 {
-    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(8 == sizeof(x));
+    BSLS_BYTEORDERUTIL_IMPL_COMPILE_TIME_ASSERT(8 == sizeof x);
 
     return ByteOrderUtil_Impl<8>::swapBytes(x);
 }

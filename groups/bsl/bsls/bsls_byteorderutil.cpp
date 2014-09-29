@@ -5,6 +5,7 @@
 BSLS_IDENT("$Id$ $CSID$")
 
 #include <bsls_bsltestutil.h>    // for testing only
+#include <bsls_stopwatch.h>      // for testing only
 
 // ----------------------------------------------------------------------------
 // NOTICE:
