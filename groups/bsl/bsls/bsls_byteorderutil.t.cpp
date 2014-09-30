@@ -1076,6 +1076,8 @@ int main(int argc, char *argv[])
         }
         sw.stop();
 
+        LOOP_ASSERT(total, 0 == (total & 0xf));
+
         if (veryVerbose) P(total);
 
         double dummy16Time = sw.accumulatedUserTime() / (1 << 28);
@@ -1142,25 +1144,25 @@ int main(int argc, char *argv[])
         sw.start(true);
         shortSrc = -1;
         for (bsls::Types::Uint64 ti = (1 << 24) - 1; true; --ti, --shortSrc) {
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
 
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
 
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
 
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
-            total += (bsls::Types::Uint64) myGenericSwap32(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
+            total += (bsls::Types::Uint64) myGenericSwap16(shortSrc);
 
             if (0 == ti) {
                 break;
@@ -1214,7 +1216,7 @@ int main(int argc, char *argv[])
 
         if (verbose) P(dummy32Time);
 
-        total = 0;
+         total = 0;
         sw.reset();
         sw.start(true);
         intSrc = (1 << 24) - 1;
