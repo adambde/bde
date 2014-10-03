@@ -72,7 +72,7 @@ BSLS_IDENT("$Id$")
 // | size | S (bits) | E (bits) |   B | T (bits) | max signficant |
 // |------|----------|----------|-----|----------|----------------|
 // |   1* |        0 |        1 |  -2 |        7 |            127 |
-// |   2  |        0 |        3 |  -4 |       13 |           8191 |
+// |   2  |        0 |        2 |  -2 |       14 |          16383 |
 // |   3  |        0 |        3 |  -4 |       21 |        2097151 |
 // |   4  |        1 |        5 | -16 |       26 |       67108863 |
 // |   5  |        1 |        5 | -16 |       34 |    17179869183 |
@@ -110,15 +110,15 @@ BSLS_IDENT("$Id$")
 // configuration is used to encode 64-bit decimal values:
 //
 //..
-// |------|----------|---|---|-----|----|-----------------|
-// | size |        P | S | E |   B |  T | max significant |
-// |------|----------|---|---|-----|----|-----------------|
-// |    2 |        0 | 0 | 2 |  -2 | 13 |            8191 |
-// |    3 |       10 | 0 | 3 |  -4 | 19 |          524287 |
-// |    4 |       11 | 1 | 5 | -16 | 24 |        16777215 |
-// |------|----------|------------------------------------|
-// |    9 | 11111111 |        FULL IEEE FORMAT*           |
-// |------|----------|------------------------------------|
+// |------|------------|---|---|-----|----|-----------------|
+// | size |          P | S | E |   B |  T | max significant |
+// |------|------------|---|---|-----|----|-----------------|
+// |    2 |        0b0 | 0 | 2 |  -2 | 13 |            8191 |
+// |    3 |       0b10 | 0 | 3 |  -4 | 19 |          524287 |
+// |    4 |       0b11 | 1 | 5 | -16 | 24 |        16777215 |
+// |------|------------|------------------------------------|
+// |    9 | 0b11111111 |        FULL IEEE FORMAT*           |
+// |------|------------|------------------------------------|
 //
 // P = predicate (bit values)
 // S = sign (bits), E = exponent (bits), B = bias
@@ -289,15 +289,21 @@ struct DecimalConvertUtil {
                                                 int                 exponent);
         // Return a 'Decimal64' object that has the specified 'mantissa',
         // 'exponent', and a sign based on the specified 'isNegative'.  The
-        // behavior is undefined unless 'isNegative', 'mantissa', and exponent
-        // were originally obtained from 'decimal64ToUnpackedSpecial'.
+        // behavior is undefined unless 'isNegative', 'mantissa', and the
+        // biased exponent were originally obtained from
+        // 'decimal64ToUnpackedSpecial'.  Note that 'exponent' should be
+        // unbiased, so 398 should be subtracted from the biased exponent
+        // gotten from 'decimal64ToUnpackedSpecial'.
 
 
     static bdldfp::Decimal64 decimal64FromUnpackedSpecial(int mantissa,
                                                           int exponent);
-        // Return a 'Decimal64' object that has the specified 'mantissa', and
-        // 'exponent'.  The behavior is undefined unless 'mantissa' and
-        // exponent were originally obtained from 'decimal64ToUnpackedSpecial'.
+        // Return a 'Decimal64' object that has the specified 'mantissa',
+        // 'exponent'.  The behavior is undefined unless 'isNegative',
+        // 'mantissa', and the biased exponent were originally obtained from
+        // 'decimal64ToUnpackedSpecial'.  Note that 'exponent' should be
+        // unbiased, so 398 should be subtracted from the biased exponent
+        // gotten from 'decimal64ToUnpackedSpecial'.
 
   public:
     // CLASS METHODS
@@ -565,19 +571,39 @@ struct DecimalConvertUtil {
     static bsls::Types::size_type decimal64ToMultiWidthEncoding(
                                                    unsigned char     *buffer,
                                                    bdldfp::Decimal64  decimal);
-        // Encode the specified 'decimal' in the *Multi-Width Encoding* format,
-        // and store the encoding into the specified 'buffer'. Return the
-        // number of bytes used by the encoding.  The behavior is undefined
-        // unless 'buffer' points to a memory area of at least 8 bytes.
+        // Store the specified 'decimal', in the *multi-width encoding* format,
+        // into the specified 'buffer' and return the number of bytes used by
+        // the encoding.  The behavior is undefined unless 'buffer' points to a
+        // memory area with enough room to hold the encode value (which has a
+        // maximum size of 8 bytes).
 
     static Decimal64 decimal64FromMultiWidthEncoding(
                                                 unsigned char          *buffer,
                                                 bsls::Types::size_type  size);
-        // Decode a decimal value in the *Multi-Width Encoding' from the
+        // Decode a decimal value in the *multi-width Encoding' format from the
         // specified 'buffer' having the specified 'size'. Return the decoded
         // value.  The behavior is undefined unless 'buffer' has at least
         // 'size' bytes, and 'size' is a valid encoding size in the
-        // 'Multi-Width Encoding' format.
+        // 'multi-width encoding' format.
+
+    static unsigned char *decimal64ToVariableWidthEncoding(
+                                                     unsigned char     *buffer,
+                                                     bdldfp::Decimal64  value);
+        // Store the specified 'decimal', in the *variable-width encoding*
+        // format, into the specified 'buffer' and return the address one past
+        // the last byte written into the 'buffer'. The behavior is undefined
+        // unless 'buffer' points to a memory area with enough room to hold the
+        // encoded value (which has a maximum size of 9 bytes).
+
+    static unsigned char *decimal64FromVariableWidthEncoding(
+                                                    bdldfp::Decimal64 *value,
+                                                    unsigned char     *buffer);
+        // Store into the specified 'decimal', the value of 'Decimal64' value
+        // stored in the *variable-width encoding* format at the specified
+        // 'buffer' address. Return the address one past the last byte read
+        // from 'buffer'.  The behavior is undefined unless 'buffer' points to
+        // a memory area holding a 'Decimal64' value encoded in the
+        // *variable-width encoding* format.
 };
 
 // ============================================================================
@@ -680,15 +706,19 @@ bsls::Types::size_type DecimalConvertUtil::decimal64ToMultiWidthEncoding(
                                         &mantissa,
                                         value))) {
         if (!isNegative) {
-            if (394 <= exponent && exponent < 402) {
-                if (mantissa < (1 << 13)) {
+            if (396 <= exponent && exponent < 400) {
+                if (mantissa < (1 << 14)) {
                     unsigned short squished = static_cast<unsigned short>(
-                        mantissa | (exponent - 394) << 13);
+                        mantissa | (exponent - 396) << 14);
 
                     unsigned short squishedN = BSLS_BYTEORDER_HTONS(squished);
                     bsl::memcpy(buffer, &squishedN, 2);
                     return 2;
-                } else if (mantissa < (1 << 21)) {
+                }
+            }
+
+            if (394 <= exponent && exponent < 402) {
+                if (mantissa < (1 << 21)) {
                     // On IBM (and Linux to a lesser extent), copying from a
                     // word-aligned source is faster, so we shift an extra the
                     // source by an extra 8 bits.
@@ -710,7 +740,7 @@ bsls::Types::size_type DecimalConvertUtil::decimal64ToMultiWidthEncoding(
                 unsigned int squished = static_cast<unsigned int>(
                                             mantissa | (exponent - 382) << 26);
                 if (isNegative) {
-                    squished |= 1ull << 31;
+                    squished |= 1 << 31;
                 }
                 unsigned int squishedN = BSLS_BYTEORDER_HTONL(squished);
                 bsl::memcpy(buffer, &squishedN, 4);
@@ -747,8 +777,8 @@ Decimal64 DecimalConvertUtil::decimal64FromMultiWidthEncoding(
 
     switch(size) {
       case 2: {
-        int exponent = (buffer[0] >> 5) - 4;
-        int mantissa = static_cast<int>(((buffer[0] & 0x1F) << 8) |
+        int exponent = (buffer[0] >> 6) - 2;
+        int mantissa = static_cast<int>(((buffer[0] & 0x3F) << 8) |
                                         static_cast<int>(buffer[1]));
 
         return decimal64FromUnpackedSpecial(mantissa, exponent);
@@ -792,6 +822,139 @@ Decimal64 DecimalConvertUtil::decimal64FromMultiWidthEncoding(
         decimalFromNetwork(&value, buffer);
         return value;
       } break;
+    }
+}
+
+inline
+unsigned char *DecimalConvertUtil::decimal64ToVariableWidthEncoding(
+                                                     unsigned char     *buffer,
+                                                     bdldfp::Decimal64  value)
+{
+    bool                isNegative;
+    int                 exponent;
+    bsls::Types::Uint64 mantissa;
+
+    // 'exponent' is biased --> biased exponent = exponent + 398
+
+    if (BSLS_PERFORMANCEHINT_PREDICT_LIKELY(0 ==
+             decimal64ToUnpackedSpecial(&isNegative,
+                                        &exponent,
+                                        &mantissa,
+                                        value))) {
+        if (!isNegative) {
+            if (396 <= exponent && exponent < 400) {
+                if (mantissa < (1 << 13)) {
+
+                    // The predicate disambiguation bit is implicitly 0.
+
+                    unsigned short squished = static_cast<unsigned short>(
+                        mantissa | (exponent - 396) << 13);
+
+                    unsigned short squishedN = BSLS_BYTEORDER_HTONS(squished);
+                    bsl::memcpy(buffer, &squishedN, 2);
+                    return buffer + 2;
+                }
+            }
+
+            if (394 <= exponent && exponent < 402) {
+                if (mantissa < (1 << 19)) {
+                    // On IBM (and Linux to a lesser extent), copying from a
+                    // word-aligned source is faster, so we shift an extra the
+                    // source by an extra 8 bits.
+
+                    unsigned int squished = static_cast<unsigned int>(
+                                     (mantissa << 8) | (exponent - 394) << 27);
+
+                    // The predicate bits should be 0b10.
+
+                    squished |= 1 << 31;
+
+                    unsigned int squishedN = BSLS_BYTEORDER_HTONL(squished);
+
+                    bsl::memcpy(buffer,
+                                reinterpret_cast<unsigned char*>(&squishedN),
+                                3);
+                    return buffer + 3;
+                }
+            }
+        }
+
+        // If the value is negative, with exponent of 15 (biased exponent 413),
+        // then the first byte will have a value of FF, which is the state used
+        // to indicate that a full 9 byte representation should be used.
+
+        if (382 <= exponent &&
+                        (exponent < 413 || (!isNegative && exponent == 413))) {
+            if (mantissa < (1 << 24)) {
+                unsigned int squished = static_cast<unsigned int>(
+                                            mantissa | (exponent - 382) << 24);
+                if (isNegative) {
+                    squished |= 1 << 29;
+                }
+                // The predicate bits should be 11.
+
+                squished |= 3 << 30;
+                unsigned int squishedN = BSLS_BYTEORDER_HTONL(squished);
+                bsl::memcpy(buffer, &squishedN, 4);
+                return buffer + 4;
+            }
+        }
+    }
+
+    *buffer++ = 0xFF;
+    bdldfp::DecimalConvertUtil::decimalToNetwork(buffer, value);
+    return buffer + 8;
+}
+
+inline
+unsigned char *DecimalConvertUtil::decimal64FromVariableWidthEncoding(
+                                                     bdldfp::Decimal64 *value,
+                                                     unsigned char     *buffer)
+{
+    if (!(*buffer & 0x80)) {
+
+        // 2-byte encoding is used.
+
+        int exponent = (buffer[0] >> 5) - 2;
+        int mantissa = static_cast<int>(((buffer[0] & 0x1F) << 8) |
+                                        static_cast<int>(buffer[1]));
+
+        *value = decimal64FromUnpackedSpecial(mantissa, exponent);
+        return buffer + 2;
+    }
+    else if ((*buffer & 0xC0) == 0x80) {
+
+        // 3-byte encoding is used.
+
+        unsigned char eByte1 = buffer[0] & 0x3F;
+
+        int exponent = (eByte1 >> 3) - 4;
+        int mantissa = static_cast<int>(((eByte1 & 0x07) << 16) |
+                                        static_cast<int>(buffer[1] << 8) |
+                                        static_cast<int>(buffer[2]));
+        *value = decimal64FromUnpackedSpecial(mantissa, exponent);
+        return buffer + 3;
+    }
+    else if (*buffer == 0xFF) {
+
+        // Full 9-byte encoding is used.
+
+        bdldfp::DecimalConvertUtil::decimalFromNetwork(value, ++buffer);
+        return buffer + 9;
+    }
+    else  {
+        // if ((*buffer & 0xC0) == 0xC0)
+        // 4-byte encoding is used.
+
+        unsigned char eByte1 = buffer[0] & 0x3F;
+        bool isNegative = eByte1 >> 5;
+        int exponent = (eByte1 & 0x1F) - 16;
+        int mantissa = static_cast<int>(static_cast<int>(buffer[1] << 16) |
+                                        static_cast<int>(buffer[2] << 8) |
+                                        static_cast<int>(buffer[3]));
+
+        *value = decimal64FromUnpackedSpecial(isNegative, mantissa, exponent);
+        return buffer + 4;
     }
 }
 
