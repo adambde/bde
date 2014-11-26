@@ -151,7 +151,7 @@ class Uint128 {
     bsls::Types::Uint64 d_low;
     bsls::Types::Uint64 d_high;
     #else
-    #error Only big or little endian is supported.
+    #  error Only big or little endian is supported.
     #endif
 
   public:
@@ -202,6 +202,11 @@ class Uint128 {
         // return a reference providing mofifiable access to this object.  The
         // behavior is undefined unless '0 <= rhs < 128'.
 
+    Uint128& operator+=(const Uint128& rhs);
+        // Set the value of this object to the sum of the value of this object
+        // and the value of the specified 'rhs' object.  Note that the behavior
+        // is always defined, as the implementation is a 2's compliment sum.
+
     void setHigh(bsls::Types::Uint64 value);
         // Set the high order bits of this integer to the specified 'value'.
 
@@ -251,9 +256,19 @@ Uint128 operator>>(Uint128 lhs, int rhs);
     // the specified 'lhs' 128-bit integer shifted by the specified 'rhs'
     // value.  The behavior is undefined unless '0 <= rhs < 128'.
 
-Uint128 operator ~(Uint128 value);
+Uint128 operator~(Uint128 value);
     // Return an 'Uint128' value equal to the bitwise ones compliment of the
     // specified 'value'.
+
+Uint128 operator-(Uint128 value);
+    // Return a 'Uint128' value equal to the bitwise representation of the
+    // twos compliment of the specified 'value'.
+
+Uint128 operator+(Uint128 lhs, const Uint128 &rhs);
+    // Return a 'Uint128' object having the value of the sum of the value of
+    // the specified 'lhs' object and the value of the specified 'rhs' object.
+    // Note that the behavior is always defined, as the implementation is a 2's
+    // compliment sum.
 
 // ============================================================================
 //                      INLINE FUNCTION DEFINITIONS
@@ -355,6 +370,55 @@ Uint128& Uint128::operator<<=(int rhs)
 }
 
 inline
+Uint128& Uint128::operator+=(const Uint128& rhs)
+{
+
+    bsls::Types::Uint64 low = d_low + rhs.d_low;
+    bsls::Types::Uint64 high = d_high + rhs.d_high;
+
+    return Uint128(preCarryHigh + (low < rhs.d_low ? 1 : 0), truncatedLow);
+}
+
+inline
+Uint128& Uint128::operator-=(const Uint128& rhs)
+{
+    return this->operator+(~rhs);
+}
+
+inline
+Uint128& Uint128::operator*=(Uint128 rhs)
+{
+    Uint128 result= 0;
+    Uint128 tmp= *this;
+    while (rhs) {
+        if (rhs & 1) {
+            result+= tmp;
+        }
+        rhs >>= 1;
+        tmp <<= 1;
+    }
+    return *this;
+}
+
+inline
+Uint128& Uint128::operator++()
+{
+    if (!++d_low) {
+        ++d_high;
+    }
+
+    return *this;
+}
+
+inline
+Uint128& Uint128::operator++(int)
+{
+    Uint128 result(*this);
+    ++*this;
+    return result;
+}
+
+inline
 void Uint128::setHigh(bsls::Types::Uint64 value)
 {
     d_high = value;
@@ -437,6 +501,28 @@ bdldfp::Uint128 bdldfp::operator~(bdldfp::Uint128 value)
     value.setLow( ~value.low());
 
     return value;
+}
+
+inline
+bdldfp::Uint128 bdldfp::operator-(bdldfp::Uint128 value)
+{
+    bdldfp::Uint128 result = ~value;
+
+    return ++result;
+}
+
+inline
+bdldfp::Uint128
+bdldfp::operator+(bdldfp::Uint128 lhs, const bdldfp::Uint128& rhs)
+{
+    return lhs+= rhs;
+}
+
+inline
+bdldfp::Uint128
+bdldfp::operator-(bdldfp::Uint128 lhs, const bdldfp::Uint128& rhs)
+{
+    return lhs-= rhs;
 }
 
 }  // close enterprise namespace
